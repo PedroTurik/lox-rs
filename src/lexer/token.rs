@@ -1,66 +1,75 @@
-#[derive(Debug)]
+pub type Number = f64;
+
+#[derive(Debug, Clone)]
 pub enum TokenType {
     // Single-character tokens.
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    LEFT_BRACE,
-    RIGHT_BRACE,
-    COMMA,
-    DOT,
-    MINUS,
-    PLUS,
-    SEMICOLON,
-    SLASH,
-    STAR,
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Minus,
+    Plus,
+    Dot,
+    Semicolon,
+    Slash,
+    Star,
+    Modulo,
 
     // One or two character tokens.
-    BANG,
-    BANG_EQUAL,
-    EQUAL,
-    EQUAL_EQUAL,
-    GREATER,
-    GREATER_EQUAL,
-    LESS,
-    LESS_EQUAL,
+    Bang,
+    BangEqual,
+    Equal,
+    EqualEqual,
+    Greater,
+    GreaterEqual,
+    Less,
+    LessEqual,
 
     // Literals.
-    IDENTIFIER,
-    STRING { literal: String },
-    NUMBER { literal: f64 },
+    Identifier,
+    String { literal: String },
+    Number { literal: Number },
 
     // Keywords.
-    AND,
-    CLASS,
-    ELSE,
-    FALSE,
-    FUN,
-    FOR,
-    IF,
-    NIL,
-    OR,
-    PRINT,
-    RETURN,
-    SUPER,
-    THIS,
-    TRUE,
-    VAR,
-    WHILE,
+    And,
+    Class,
+    Else,
+    False,
+    Fun,
+    For,
+    If,
+    Nil,
+    Or,
+    Print,
+    Return,
+    Super,
+    This,
+    True,
+    Var,
+    While,
 
-    EOF,
+    Eof,
 }
 
-#[derive(Debug)]
+impl PartialEq for TokenType {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
-    token_type: TokenType,
-    lexeme: String,
-    line: usize,
+    pub token_type: TokenType,
+    pub lexeme: String,
+    pub line: usize,
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, line: usize) -> Self {
+    pub fn new<T: Into<String>>(token_type: TokenType, lexeme: T, line: usize) -> Self {
         Self {
             token_type,
-            lexeme,
+            lexeme: lexeme.into(),
             line,
         }
     }
