@@ -50,7 +50,7 @@ impl<W: Write> Interpreter<W> {
 
     pub fn execute_block(
         &mut self,
-        stmts: &mut [Stmt],
+        stmts: &[Stmt],
         environment: Environment,
     ) -> Result<(), InterpreterError> {
         let previous = self.environment.clone();
@@ -68,39 +68,37 @@ impl<W: Write> Interpreter<W> {
         Ok(())
     }
 
-    fn execute(&mut self, stmt: &mut Stmt) -> Result<(), InterpreterError> {
-        // dbg!(stmt.clone());
-        // dbg!(self.environment.clone());
+    fn execute(&mut self, stmt: &Stmt) -> Result<(), InterpreterError> {
         match stmt {
             Stmt::Expression(expr) => {
-                self.evaluate(&mut expr.expr)?;
+                self.evaluate(&expr.expr)?;
             }
             Stmt::Print(print) => {
-                let value = Self::lox_stringify(self.evaluate(&mut print.expr)?);
+                let value = Self::lox_stringify(self.evaluate(&print.expr)?);
                 writeln!(self.out_stream, "{}", value).unwrap();
             }
             Stmt::Var(var) => {
-                let value = match var.initializer {
-                    Some(ref mut expr) => self.evaluate(expr)?,
+                let value = match &var.initializer {
+                    Some(expr) => self.evaluate(expr)?,
                     None => Value::Nil,
                 };
                 self.environment.set(&var.name.lexeme, value);
             }
             Stmt::Block(block) => {
                 let environment = self.environment.extend();
-                self.execute_block(&mut block.statements, environment)?;
+                self.execute_block(&block.statements, environment)?;
             }
             Stmt::If(lox_if) => {
-                let condition = self.evaluate(&mut lox_if.condition)?;
+                let condition = self.evaluate(&lox_if.condition)?;
                 if Self::is_truthy(&condition) {
-                    self.execute(&mut lox_if.then_branch)?;
-                } else if let Some(ref mut else_branch) = lox_if.else_branch {
+                    self.execute(&lox_if.then_branch)?;
+                } else if let Some(else_branch) = &lox_if.else_branch {
                     self.execute(else_branch)?;
                 }
             }
             Stmt::While(lox_while) => {
-                while Self::is_truthy(&self.evaluate(&mut lox_while.condition)?) {
-                    self.execute(&mut lox_while.body)?;
+                while Self::is_truthy(&self.evaluate(&lox_while.condition)?) {
+                    self.execute(&lox_while.body)?;
                 }
             }
             Stmt::Function(function) => {
@@ -110,7 +108,7 @@ impl<W: Write> Interpreter<W> {
                     .set(&function.name.lexeme, Value::Function(lox_function));
             }
             Stmt::Return(lox_return) => {
-                return Err(InterpreterError::lox_return(match &mut lox_return.value {
+                return Err(InterpreterError::lox_return(match &lox_return.value {
                     Some(expr) => self.evaluate(expr)?,
                     None => Value::Nil,
                 }))
@@ -120,12 +118,12 @@ impl<W: Write> Interpreter<W> {
         Ok(())
     }
 
-    fn evaluate(&mut self, expr: &mut Expr) -> Result<Value, InterpreterError> {
+    fn evaluate(&mut self, expr: &Expr) -> Result<Value, InterpreterError> {
         match expr {
             Expr::Literal(literal) => Ok(literal.value.clone()),
-            Expr::Grouping(grouping) => self.evaluate(&mut grouping.expr),
+            Expr::Grouping(grouping) => self.evaluate(&grouping.expr),
             Expr::Unary(unary) => {
-                let right = self.evaluate(&mut unary.right)?;
+                let right = self.evaluate(&unary.right)?;
                 match unary.operator.token_type {
                     TokenType::Minus => match right {
                         Value::Number(n) => Ok(Value::Number(-n)),
@@ -139,8 +137,8 @@ impl<W: Write> Interpreter<W> {
                 }
             }
             Expr::Binary(binary) => {
-                let left = self.evaluate(&mut binary.left)?;
-                let right = self.evaluate(&mut binary.right)?;
+                let left = self.evaluate(&binary.left)?;
+                let right = self.evaluate(&binary.right)?;
 
                 match binary.operator.token_type {
                     TokenType::Minus => match (left, right) {
@@ -210,7 +208,7 @@ impl<W: Write> Interpreter<W> {
                 .get_var(variable)
                 .expect("Variable not correctly resolved at compile time")),
             Expr::Assign(assign) => {
-                let value = self.evaluate(&mut assign.value)?;
+                let value = self.evaluate(&assign.value)?;
                 let success = self.environment.assign(assign, value.clone());
 
                 if !success {
@@ -223,7 +221,7 @@ impl<W: Write> Interpreter<W> {
                 Ok(value)
             }
             Expr::Logical(logical) => {
-                let left = self.evaluate(&mut logical.left)?;
+                let left = self.evaluate(&logical.left)?;
                 if logical.operator.token_type == TokenType::Or {
                     if Self::is_truthy(&left) {
                         return Ok(left.clone());
@@ -231,12 +229,12 @@ impl<W: Write> Interpreter<W> {
                 } else if !Self::is_truthy(&left) {
                     return Ok(left.clone());
                 }
-                self.evaluate(&mut logical.right)
+                self.evaluate(&logical.right)
             }
             Expr::Call(call) => {
-                let callee = self.evaluate(&mut call.callee)?;
+                let callee = self.evaluate(&call.callee)?;
                 let mut arguments = Vec::new();
-                for arg in &mut call.arguments {
+                for arg in &call.arguments {
                     arguments.push(self.evaluate(arg)?);
                 }
 

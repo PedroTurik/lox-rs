@@ -50,7 +50,7 @@ impl LoxCall for LoxFn {
                 environment.set(&param.lexeme, arg);
             });
 
-        let ret = interpreter.execute_block(&mut self.declaration.body, environment);
+        let ret = interpreter.execute_block(&self.declaration.body, environment);
 
         match ret {
             Err(InterpreterError::Return(v)) => Ok(v),

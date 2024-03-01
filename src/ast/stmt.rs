@@ -1,4 +1,10 @@
-use std::fmt::Debug;
+use std::{
+    borrow::Borrow,
+    cell::{RefCell, UnsafeCell},
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+    rc::Rc,
+};
 
 use crate::lexer::Token;
 
@@ -65,7 +71,9 @@ impl Stmt {
     }
 
     pub fn function(name: Token, params: Vec<Token>, body: Vec<Stmt>) -> Self {
-        Stmt::Function(Function { name, params, body })
+        Stmt::Function(Function {
+            function: Rc::new(UnsafeCell::new(FunctionDecl { name, params, body })),
+        })
     }
 
     pub fn return_stmt(keyword: Token, value: Option<Expr>) -> Self {
@@ -107,8 +115,33 @@ pub struct While {
     pub body: Box<Stmt>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Function {
+    pub function: Rc<UnsafeCell<FunctionDecl>>,
+}
+
+impl PartialEq for Function {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.function, &other.function)
+    }
+}
+
+impl Deref for Function {
+    type Target = FunctionDecl;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.function.get() }
+    }
+}
+
+impl DerefMut for Function {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.function.get() }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct FunctionDecl {
     pub name: Token,
     pub params: Vec<Token>,
     pub body: Vec<Stmt>,

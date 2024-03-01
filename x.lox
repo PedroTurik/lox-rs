@@ -1,3 +1,8 @@
-for (var i = 0; i < 10; i = i+1) {
-    print i;
+fun a() {
+    var i = 2;
+    fun b() {
+        fun c() {
+            print i;
+        }
+    }
 }
