@@ -85,11 +85,22 @@ impl Environment {
         }
     }
 
-    pub fn get<'a, T: Lexeme<'a>>(&'a self, key: &'a T, depth: usize) -> Option<Value> {
+    pub fn get_var<'a, T: Lexeme<'a>>(&'a self, key: &'a T) -> Option<Value> {
         match key.local_depth() {
             Some(local_depth) => self.get_at(key.lexeme(), local_depth),
             None => self.global.borrow().get(key.lexeme()),
         }
+    }
+
+    pub fn assign<'a, T: Lexeme<'a>>(&'a mut self, var: &'a T, value: Value) -> bool {
+        match var.local_depth() {
+            Some(local_depth) => self.set_at(var.lexeme(), value, local_depth),
+            None => self.global.borrow_mut().set(var.lexeme(), value),
+        }
+    }
+
+    pub fn set(&mut self, ident: &str, value: Value) {
+        self.node.borrow_mut().set(ident, value);
     }
 
     fn get_at(&self, key: &str, depth: usize) -> Option<Value> {
@@ -97,14 +108,7 @@ impl Environment {
             .and_then(|ancestor| ancestor.borrow().get(key).clone())
     }
 
-    pub fn set<'a, T: Lexeme<'a>>(&'a mut self, var: &'a T, value: Value) -> bool {
-        match var.local_depth() {
-            Some(local_depth) => self.set_at(var.lexeme(), value, local_depth),
-            None => self.global.borrow_mut().set(var.lexeme(), value),
-        }
-    }
-
-    pub fn set_at(&mut self, key: &str, value: Value, depth: usize) -> bool {
+    fn set_at(&mut self, key: &str, value: Value, depth: usize) -> bool {
         self.ancestor(depth)
             .map(|ancestor| ancestor.borrow_mut().set(key, value))
             .unwrap_or(false)

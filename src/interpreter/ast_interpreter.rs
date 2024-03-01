@@ -11,7 +11,6 @@ use super::{
 };
 
 pub struct Interpreter<W: Write> {
-    globals: Environment,
     environment: Environment,
     out_stream: W,
 }
@@ -34,10 +33,8 @@ impl InterpreterError {
 
 impl<W: Write> Interpreter<W> {
     pub fn new(out_stream: W) -> Self {
-        let globals = Environment::new();
-        let environment = globals.clone();
+        let environment = Environment::new();
         Self {
-            globals,
             environment,
             out_stream,
         }
@@ -208,24 +205,13 @@ impl<W: Write> Interpreter<W> {
                     _ => unreachable!(),
                 }
             }
-            Expr::Variable(variable) => match variable.resolving_depth {
-                Some(u) => Ok(self
-                    .environment
-                    .get_at(&variable.name.lexeme, u)
-                    .expect("variable not correctly resolved at compile time")),
-                None => Ok(self
-                    .globals
-                    .get_at(&variable.name.lexeme, 0)
-                    .expect("variable not correctly resolved at compile time")),
-            },
+            Expr::Variable(variable) => Ok(self
+                .environment
+                .get_var(variable)
+                .expect("Variable not correctly resolved at compile time")),
             Expr::Assign(assign) => {
                 let value = self.evaluate(&mut assign.value)?;
-                let success = match assign.resolving_depth {
-                    Some(u) => self
-                        .environment
-                        .set_at(&assign.name.lexeme, value.clone(), u),
-                    None => self.globals.set(&assign.name.lexeme, value.clone()),
-                };
+                let success = self.environment.assign(assign, value.clone());
 
                 if !success {
                     return Err(InterpreterError::runtime_error(

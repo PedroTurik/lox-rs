@@ -45,9 +45,9 @@ impl LoxCall for LoxFn {
         self.declaration
             .params
             .iter()
-            .zip(arguments.iter())
+            .zip(arguments.into_iter())
             .for_each(|(param, arg)| {
-                environment.set(&param.lexeme, arg.clone());
+                environment.set(&param.lexeme, arg);
             });
 
         let ret = interpreter.execute_block(&mut self.declaration.body, environment);

@@ -22,7 +22,15 @@ pub fn run() {
 
     // dbg!(ast.clone());
 
-    let ans = interpreter.interpret(ast);
+    match interpreter.interpret(ast) {
+        Ok(_) => (),
+        Err(err) => match err {
+            interpreter::ast_interpreter::InterpreterError::RuntimeError(r) => {
+                println!("{}", r);
+            }
+            interpreter::ast_interpreter::InterpreterError::Return(_) => (),
+        },
+    }
 
     // dbg!(ans);
 }
