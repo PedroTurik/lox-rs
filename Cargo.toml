@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+hashbrown = "0.14.3"
 once_cell = "1.19.0"
 
 [ lib ]

@@ -45,7 +45,7 @@ impl LoxCall for LoxFn {
         self.declaration
             .params
             .iter()
-            .zip(arguments.into_iter())
+            .zip(arguments)
             .for_each(|(param, arg)| {
                 environment.set(&param.lexeme, arg);
             });

@@ -41,8 +41,8 @@ impl<W: Write> Interpreter<W> {
     }
 
     pub fn interpret(&mut self, program: Vec<Stmt>) -> Result<(), InterpreterError> {
-        for mut stmt in program {
-            self.execute(&mut stmt)?;
+        for stmt in program {
+            self.execute(&stmt)?;
         }
 
         Ok(())
