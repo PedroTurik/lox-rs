@@ -140,67 +140,33 @@ impl<W: Write> Interpreter<W> {
                 let left = self.evaluate(&binary.left)?;
                 let right = self.evaluate(&binary.right)?;
 
-                match binary.operator.token_type {
-                    TokenType::Minus => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Number(l - r)),
-                        _ => Err(InterpreterError::runtime_error(
-                            "Binary operands must be numbers",
-                            binary.operator.clone(),
-                        )),
+                match (left, right) {
+                    (Value::Number(l), Value::Number(r)) => match binary.operator.token_type {
+                        TokenType::Minus => Ok(Value::Number(l - r)),
+                        TokenType::Slash => Ok(Value::Number(l / r)),
+                        TokenType::Star => Ok(Value::Number(l * r)),
+                        TokenType::Plus => Ok(Value::Number(l + r)),
+                        TokenType::Greater => Ok(Value::Bool(l > r)),
+                        TokenType::GreaterEqual => Ok(Value::Bool(l >= r)),
+                        TokenType::Less => Ok(Value::Bool(l < r)),
+                        TokenType::LessEqual => Ok(Value::Bool(l <= r)),
+                        TokenType::EqualEqual => Ok(Value::Bool(l == r)),
+                        TokenType::BangEqual => Ok(Value::Bool(l != r)),
+                        _ => unreachable!(),
                     },
-                    TokenType::Slash => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Number(l / r)),
-                        _ => Err(InterpreterError::runtime_error(
-                            "Binary operands must be numbers",
-                            binary.operator.clone(),
-                        )),
-                    },
-                    TokenType::Star => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Number(l * r)),
-                        _ => Err(InterpreterError::runtime_error(
-                            "Binary operands must be numbers",
-                            binary.operator.clone(),
-                        )),
-                    },
-                    TokenType::Plus => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Number(l + r)),
-                        (Value::String(l), Value::String(r)) => Ok(Value::String(l + &r)),
+                    (Value::String(l), Value::String(r)) => match binary.operator.token_type {
+                        TokenType::Plus => Ok(Value::String(l + &r)),
+                        TokenType::EqualEqual => Ok(Value::Bool(l == r)),
+                        TokenType::BangEqual => Ok(Value::Bool(l != r)),
                         _ => Err(InterpreterError::runtime_error(
                             "Binary operands must be numbers or strings",
                             binary.operator.clone(),
                         )),
                     },
-                    TokenType::Greater => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l > r)),
-                        _ => Err(InterpreterError::runtime_error(
-                            "Binary operands must be numbers",
-                            binary.operator.clone(),
-                        )),
-                    },
-                    TokenType::GreaterEqual => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l >= r)),
-                        _ => Err(InterpreterError::runtime_error(
-                            "Binary operands must be numbers",
-                            binary.operator.clone(),
-                        )),
-                    },
-                    TokenType::Less => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l < r)),
-                        _ => Err(InterpreterError::runtime_error(
-                            "Binary operands must be numbers",
-                            binary.operator.clone(),
-                        )),
-                    },
-                    TokenType::LessEqual => match (left, right) {
-                        (Value::Number(l), Value::Number(r)) => Ok(Value::Bool(l <= r)),
-                        _ => Err(InterpreterError::runtime_error(
-                            "Binary operands must be numbers",
-                            binary.operator.clone(),
-                        )),
-                    },
-                    TokenType::EqualEqual => Ok(Value::Bool(left == right)),
-                    TokenType::BangEqual => Ok(Value::Bool(left != right)),
-                    _ => unreachable!(),
+                    _ => Err(InterpreterError::runtime_error(
+                        "Binary operands must be numbers",
+                        binary.operator.clone(),
+                    )),
                 }
             }
             Expr::Variable(variable) => Ok(self
