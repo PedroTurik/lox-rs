@@ -1,4 +1,4 @@
-use std::{fs, io};
+use std::{fs, io, time::Instant};
 
 use ast::parser::Parser;
 use interpreter::ast_interpreter::Interpreter;
@@ -22,6 +22,7 @@ pub fn run() {
 
     // dbg!(ast.clone());
 
+    let start = Instant::now();
     match interpreter.interpret(ast) {
         Ok(_) => (),
         Err(err) => match err {
@@ -31,6 +32,8 @@ pub fn run() {
             interpreter::ast_interpreter::InterpreterError::Return(_) => (),
         },
     }
+
+    println!("Seconds elapsed: {}", start.elapsed().as_secs_f64());
 
     // dbg!(ans);
 }
