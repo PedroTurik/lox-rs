@@ -224,10 +224,10 @@ impl<W: Write> Interpreter<W> {
                 let left = self.evaluate(&logical.left)?;
                 if logical.operator.token_type == TokenType::Or {
                     if Self::is_truthy(&left) {
-                        return Ok(left.clone());
+                        return Ok(left);
                     }
                 } else if !Self::is_truthy(&left) {
-                    return Ok(left.clone());
+                    return Ok(left);
                 }
                 self.evaluate(&logical.right)
             }

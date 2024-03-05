@@ -105,7 +105,7 @@ impl Environment {
 
     fn get_at(&self, key: &str, depth: usize) -> Option<Value> {
         self.ancestor(depth)
-            .and_then(|ancestor| ancestor.borrow().get(key).clone())
+            .and_then(|ancestor| ancestor.borrow().get(key))
     }
 
     fn set_at(&mut self, key: &str, value: Value, depth: usize) -> bool {
@@ -126,16 +126,9 @@ impl Environment {
         let mut node = Some(self.node.clone());
 
         for _ in 0..depth {
-            // Temporary introduced to get around borrowck
-            let mut next = None;
-            if let Some(ref node) = node {
-                let bn = node.borrow();
-                next = bn.parent.clone();
-            }
+            // safe due to compile time resolving
 
-            next.as_ref()?;
-
-            node = next;
+            node = unsafe { node.unwrap_unchecked().borrow().parent.clone() }
         }
         node
     }
